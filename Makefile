@@ -10,7 +10,7 @@ CC = gcc
 CFLAGS = -m32 -ffreestanding -nostdlib -fno-pie -g -Wall -Wextra
 
 LD = ld
-OBJS = boot.o kernel.o
+OBJS = boot.o kstart.o
 
 TARGET = unikernel.bin
 
@@ -27,8 +27,8 @@ boot.o: boot.s
 	$(CC) $(CFLAGS) -c boot.s -o boot.o
 
 # Compile C kernel file (contains the kernel library).
-kernel.o: kernel.c
-	$(CC) $(CFLAGS) -c kernel.c -o kernel.o
+kstart.o: kstart.c
+	$(CC) $(CFLAGS) -c kstart.c -o kstart.o
 
 # Clean up build files.
 clean:

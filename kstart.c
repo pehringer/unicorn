@@ -64,8 +64,8 @@ void print(const char* str) {
     }
 }
 
-// The kernel's main entry point.
-void kmain(void) {
+// The kernel entry point.
+void kstart(void) {
     // Clear the screen by printing spaces everywhere.
     unsigned char clear_color = make_color(COLOR_BLACK, COLOR_BLACK);
     for (int y = 0; y < 25; y++) {
@@ -77,7 +77,7 @@ void kmain(void) {
     // Reset cursor position and print the message.
     vga_x = 0;
     vga_y = 0;
-    print("Hello World! This is the unicorn unikernel!");
+    print("Hello World!\nThis is the unicorn unikernel!");
     // Halt the CPU.
     while (1) {}
 }

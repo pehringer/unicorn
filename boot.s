@@ -29,10 +29,10 @@ _start:
     # Set up the stack pointer. Its grows downwards, point esp to the top of the stack space.
     mov $stack_top, %esp
 
-    # Call the C kernel's main function.
-    call kmain
+    # Call the C entry point.
+    call kstart
 
-    # If kmain should never return, if it does halt the CPU.
+    # kstart should never return, if it does halt the CPU.
 #    cli
 #1:  hlt
 #    jmp 1b
