@@ -1,35 +1,55 @@
 # Makefile for building the unikernel.
 
-# Compiler flags to use.
+# Compiler
 # -m32: Compile for 32-bit architecture.
 # -ffreestanding: Don't assume a standard library is present.
 # -nostdlib: Don't link against the standard library.
 # -fno-pie: Don't create a position-independent executable.
 # -g: Include debug information.
 CC = gcc
-CFLAGS = -m32 -ffreestanding -nostdlib -fno-pie -g -Wall -Wextra
+CFLAGS = -m32 -ffreestanding -nostdlib -fno-pie -g -Wall -Wextra -Ikernel/include
 
+# Linker
 LD = ld
-OBJS = boot.o kstart.o
 
-TARGET = unikernel.bin
+# Directories
+SRC_DIR = kernel/src
+OBJ_DIR = build/obj
+BIN_DIR = build/bin
 
-# Run the unikernel in qemu.
+# Source files
+BOOT_SRC = $(SRC_DIR)/boot.s
+KSTART_SRC = $(SRC_DIR)/kstart.c
+
+# Object files
+BOOT_OBJ = $(OBJ_DIR)/boot.o
+KSTART_OBJ = $(OBJ_DIR)/kstart.o
+
+# Target binary
+TARGET = $(BIN_DIR)/unikernel.bin
+
+# Default target
+all: $(TARGET)
+
+# Link the final binary
+$(TARGET): $(BOOT_OBJ) $(KSTART_OBJ)
+	mkdir -p $(BIN_DIR)
+	$(LD) -m elf_i386 -T link.ld -o $(TARGET) $(BOOT_OBJ) $(KSTART_OBJ)
+
+# Compile assembly boot file
+$(BOOT_OBJ): $(BOOT_SRC)
+	mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $(BOOT_SRC) -o $(BOOT_OBJ)
+
+# Compile C kernel start file
+$(KSTART_OBJ): $(KSTART_SRC)
+	mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $(KSTART_SRC) -o $(KSTART_OBJ)
+
+# Run the unikernel in QEMU
 run: $(TARGET)
 	qemu-system-i386 -kernel $(TARGET)
 
-# Link object files into the final unikernel binary.
-$(TARGET): $(OBJS)
-	$(LD) -m elf_i386 -T link.ld -o $(TARGET) $(OBJS)
-
-# Compile assembly boot file (contains multiboot header and entry point).
-boot.o: boot.s
-	$(CC) $(CFLAGS) -c boot.s -o boot.o
-
-# Compile C kernel file (contains the kernel library).
-kstart.o: kstart.c
-	$(CC) $(CFLAGS) -c kstart.c -o kstart.o
-
-# Clean up build files.
+# Clean build files
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
