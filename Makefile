@@ -9,12 +9,12 @@ BIN_DIR = build/bin
 # Source files.
 BOOT_SRC = $(SRC_DIR)/boot.s
 KSTART_SRC = $(SRC_DIR)/kstart.c
-KDIS_SRC = $(SRC_DIR)/kdis.c
+KSER_SRC = $(SRC_DIR)/kser.c
 
 # Object files.
 BOOT_OBJ = $(OBJ_DIR)/boot.o
 KSTART_OBJ = $(OBJ_DIR)/kstart.o
-KDIS_OBJ = $(OBJ_DIR)/kdis.o
+KSER_OBJ = $(OBJ_DIR)/kser.o
 
 # Target binary.
 TARGET = $(BIN_DIR)/unikernel.bin
@@ -35,9 +35,9 @@ LD = ld
 all: $(TARGET)
 
 # Link the final binary.
-$(TARGET): $(BOOT_OBJ) $(KSTART_OBJ) $(KDIS_OBJ)
+$(TARGET): $(BOOT_OBJ) $(KSTART_OBJ) $(KBUG_OBJ) $(KSER_OBJ)
 	mkdir -p $(BIN_DIR)
-	$(LD) -m elf_i386 -T link.ld -o $(TARGET) $(BOOT_OBJ) $(KSTART_OBJ) $(KDIS_OBJ)
+	$(LD) -m elf_i386 -T link.ld -o $(TARGET) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ)
 
 # Compile assembly boot file.
 $(BOOT_OBJ): $(BOOT_SRC)
@@ -49,14 +49,14 @@ $(KSTART_OBJ): $(KSTART_SRC)
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $(KSTART_SRC) -o $(KSTART_OBJ)
 
-# Compile C kernal library display file.
-$(KDIS_OBJ): $(KDIS_SRC)
+# Compile C kernal library serial file.
+$(KSER_OBJ): $(KSER_SRC)
 	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(KDIS_SRC) -o $(KDIS_OBJ)
+	$(CC) $(CFLAGS) -c $(KSER_SRC) -o $(KSER_OBJ)
 
 # Run the unikernel in QEMU
 run: $(TARGET)
-	qemu-system-i386 -kernel $(TARGET)
+	qemu-system-x86_64 -kernel $(TARGET) -nographic
 
 # Clean build files
 clean:
