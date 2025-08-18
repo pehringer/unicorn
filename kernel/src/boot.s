@@ -28,16 +28,10 @@ stack_top:
 _start:
     # Set up the stack pointer. Its grows downwards, point esp to the top of the stack space.
     mov $stack_top, %esp
-
     # Call the C entry point.
     call kstart
-
     # kstart should never return, if it does halt the CPU.
-#    cli
-#1:  hlt
-#    jmp 1b
-
-cli
+    cli
 halt:
     hlt
     jmp halt

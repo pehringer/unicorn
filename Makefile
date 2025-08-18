@@ -7,11 +7,13 @@ OBJ_DIR = build/obj
 BIN_DIR = build/bin
 
 # Source files.
+ARCH_SRC = $(SRC_DIR)/arch.s
 BOOT_SRC = $(SRC_DIR)/boot.s
 KSTART_SRC = $(SRC_DIR)/kstart.c
 KSER_SRC = $(SRC_DIR)/kser.c
 
 # Object files.
+ARCH_OBJ = $(OBJ_DIR)/arch.o
 BOOT_OBJ = $(OBJ_DIR)/boot.o
 KSTART_OBJ = $(OBJ_DIR)/kstart.o
 KSER_OBJ = $(OBJ_DIR)/kser.o
@@ -35,9 +37,15 @@ LD = ld
 all: $(TARGET)
 
 # Link the final binary.
-$(TARGET): $(BOOT_OBJ) $(KSTART_OBJ) $(KBUG_OBJ) $(KSER_OBJ)
+$(TARGET): $(ARCH_OBJ) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ)
 	mkdir -p $(BIN_DIR)
-	$(LD) -m elf_i386 -T link.ld -o $(TARGET) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ)
+	$(LD) -m elf_i386 -T link.ld -o $(TARGET) $(ARCH_OBJ) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ)
+
+
+# Compile assembly routines file.
+$(ARCH_OBJ): $(ARCH_SRC)
+	mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $(ARCH_SRC) -o $(ARCH_OBJ)
 
 # Compile assembly boot file.
 $(BOOT_OBJ): $(BOOT_SRC)

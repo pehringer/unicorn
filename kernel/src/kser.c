@@ -15,15 +15,8 @@ static const unsigned short COM1_LSR = 0x03FD; // Line Status Register
 static const unsigned char COM1_LSR_THRE = 0x20; // Transmit Holding Register Empty
 static const unsigned char COM1_LSR_RDR = 0x01; // Receiver Data Ready
 
-static inline void outb(unsigned short port, unsigned char byte) {
-    __asm__ volatile ("outb %0, %1" : : "a"(byte), "Nd"(port));
-}
-
-static inline unsigned char inb(unsigned short port) {
-    unsigned char byte;
-    __asm__ volatile ("inb %1, %0" : "=a"(byte) : "Nd"(port));
-    return byte;
-}
+void outb(unsigned short port, unsigned char byte);
+unsigned char inb(unsigned short port);
 
 int kser_init(void) {
     outb(COM1_IER, 0x00); // Disable interrupts.
