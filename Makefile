@@ -5,6 +5,7 @@ INC_DIR = kernel/include
 SRC_DIR = kernel/src
 OBJ_DIR = build/obj
 BIN_DIR = build/bin
+ISO_DIR = build/iso
 
 # Source files.
 ARCH_SRC = $(SRC_DIR)/arch.s
@@ -18,8 +19,10 @@ BOOT_OBJ = $(OBJ_DIR)/boot.o
 KSTART_OBJ = $(OBJ_DIR)/kstart.o
 KSER_OBJ = $(OBJ_DIR)/kser.o
 
-# Target binary.
-TARGET = $(BIN_DIR)/unikernel.bin
+# Output Targets.
+TARGET = unikernel
+TARGET_BIN = $(BIN_DIR)/$(TARGET).bin
+TARGET_ISO = $(BIN_DIR)/$(TARGET).iso
 
 # Compiler.
 # -m32: Compile for 32-bit architecture.
@@ -33,39 +36,45 @@ CFLAGS = -m32 -ffreestanding -nostdlib -fno-pie -g -Wall -Wextra -I$(INC_DIR)
 # Linker.
 LD = ld
 
-# Default target.
-all: $(TARGET)
+all: $(TARGET_BIN)
 
-# Link the final binary.
-$(TARGET): $(ARCH_OBJ) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ)
-	mkdir -p $(BIN_DIR)
-	$(LD) -m elf_i386 -T link.ld -o $(TARGET) $(ARCH_OBJ) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ)
-
-
-# Compile assembly routines file.
-$(ARCH_OBJ): $(ARCH_SRC)
+$(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
+
+$(ARCH_OBJ): $(ARCH_SRC) $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $(ARCH_SRC) -o $(ARCH_OBJ)
 
-# Compile assembly boot file.
-$(BOOT_OBJ): $(BOOT_SRC)
-	mkdir -p $(OBJ_DIR)
+$(BOOT_OBJ): $(BOOT_SRC) $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $(BOOT_SRC) -o $(BOOT_OBJ)
 
-# Compile C kernel start file.
-$(KSTART_OBJ): $(KSTART_SRC)
-	mkdir -p $(OBJ_DIR)
+$(KSTART_OBJ): $(KSTART_SRC) $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $(KSTART_SRC) -o $(KSTART_OBJ)
 
-# Compile C kernal library serial file.
-$(KSER_OBJ): $(KSER_SRC)
-	mkdir -p $(OBJ_DIR)
+$(KSER_OBJ): $(KSER_SRC) $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $(KSER_SRC) -o $(KSER_OBJ)
 
-# Run the unikernel in QEMU
-run: $(TARGET)
-	qemu-system-x86_64 -kernel $(TARGET) -nographic
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
 
-# Clean build files
+$(TARGET_BIN): $(ARCH_OBJ) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ) $(BIN_DIR)
+	$(LD) -m elf_i386 -T link.ld -o $(TARGET_BIN) $(ARCH_OBJ) $(BOOT_OBJ) $(KSTART_OBJ) $(KSER_OBJ)
+
+# Create a GRUB2 ISO disk image.
+$(TARGET_ISO): $(TARGET_BIN)
+	mkdir -p $(ISO_DIR)/boot/grub
+	cp $(TARGET_BIN) $(ISO_DIR)/boot/$(TARGET).bin
+	# Create grub.cfg file.
+	echo 'set timeout=0' > $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'set default=0' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'menuentry "$(TARGET)" {' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '   multiboot /boot/$(TARGET).bin' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '   boot' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '}' >> $(ISO_DIR)/boot/grub/grub.cfg
+	# Generate ISO with GRUB bootloader.
+	grub2-mkrescue -o $(TARGET_ISO) $(ISO_DIR)
+
+run: $(TARGET_ISO)
+	qemu-system-x86_64 -cdrom $(TARGET_ISO) -nographic
+
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(ISO_DIR)
