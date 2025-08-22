@@ -1,39 +1,36 @@
-# Assembly code that sets up the initial environment for the unikernel.
+/* Multiboot2 header (first 32KB, 8-byte aligned) */
+.section .multiboot2_header
+.align 8
+multiboot2_header_start:
+	.long 0xE85250D6 /* magic */
+	.long 0          /* arch = i386 */
+	.long multiboot2_header_end - multiboot2_header_start
+	.long -(0xE85250D6 + 0 + (multiboot2_header_end - multiboot2_header_start))
+multiboot2_header_tags:
+	.short 0 /* end tag type */
+	.short 0 /* flags */
+	.long 8  /* size */
+multiboot2_header_end:
 
-# Declare constants for the multiboot header.
-.set ALIGN,    1<<0             # Align loaded modules on page boundaries.
-.set MEMINFO,  1<<1             # Provide memory map.
-.set FLAGS,    ALIGN | MEMINFO  # This is the Multiboot 'flags' field.
-.set MAGIC,    0x1BADB002       # The magic number for the Multiboot header.
-.set CHECKSUM, -(MAGIC + FLAGS) # The checksum.
-
-# Multiboot header section. Must be at the start of the unikernel binary.
-.section .multiboot
-.align 4
-.long MAGIC
-.long FLAGS
-.long CHECKSUM
-
-# Stack section. Allocates 16KB of space for the stack.
+/* Stack (16 KB) */
 .section .bss
 .align 16
 stack_bottom:
-.skip 16384 # 16 KiB
+	.skip 16384
 stack_top:
 
-# Text section. Initialization code, the linker script specifies _start as the entry point.
+/* Entry point */
 .section .text
 .global _start
 .type _start, @function
 _start:
-    # Set up the stack pointer. Its grows downwards, point esp to the top of the stack space.
-    mov $stack_top, %esp
-    # Call the C entry point.
-    call kstart
-    # kstart should never return, if it does halt the CPU.
-    cli
-halt:
-    hlt
-    jmp halt
+	mov $stack_top, %esp
+	push %ebx /* arg1 = pointer to multiboot info */
+	push %eax /* arg0 = magic */
+	call kstart
+	cli
+.halt:
+	hlt
+	jmp .halt
 
 .size _start, . - _start

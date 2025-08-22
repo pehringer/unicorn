@@ -67,14 +67,15 @@ $(TARGET_ISO): $(TARGET_BIN)
 	echo 'set timeout=0' > $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'set default=0' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'menuentry "$(TARGET)" {' >> $(ISO_DIR)/boot/grub/grub.cfg
-	echo '   multiboot /boot/$(TARGET).bin' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '   multiboot2 /boot/$(TARGET).bin' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo '   boot' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo '}' >> $(ISO_DIR)/boot/grub/grub.cfg
 	# Generate ISO with GRUB bootloader.
 	grub2-mkrescue -o $(TARGET_ISO) $(ISO_DIR)
 
 run: $(TARGET_ISO)
-	qemu-system-x86_64 -cdrom $(TARGET_ISO) -nographic
+	qemu-system-i386 -cdrom $(TARGET_ISO) -nographic
+	#qemu-system-x86_64 -cdrom $(TARGET_ISO) -nographic
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR) $(ISO_DIR)
